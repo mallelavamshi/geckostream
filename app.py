@@ -188,18 +188,17 @@ def download_link(file_path, file_name):
     return href
 
 def main():
-    st.set_page_config(page_title="Image Analysis Tool", page_icon="🔍", layout="wide")
+    st.set_page_config(page_title="Estate Sale AI Appraisal App ", page_icon="🔍", layout="wide")
     
-    st.title("🔍 Google Drive Image Analysis Tool")
+    st.title("🔍 Estate Sale AI Appraisal App")
     st.markdown("---")
 
     with st.sidebar:
         st.header("About")
         st.write("""
-        This tool analyzes images from a Google Drive folder using:
-        - Google Lens for visual search
-        - Claude AI for analysis
-        - Generates detailed Excel reports
+        This App analyzes Item images using AI and some cool tech for:
+        - Estate sales
+        - Auction houses
         """)
 
     folder_url = st.text_input("Enter Google Drive Folder URL", 
