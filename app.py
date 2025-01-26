@@ -190,15 +190,16 @@ def download_link(file_path, file_name):
 def main():
     st.set_page_config(page_title="Estate Sale AI Appraisal App ", page_icon="🔍", layout="wide")
     
-    st.title("🔍 Estate Sale AI Appraisal App")
+    st.title("🔍 EstateGenius AI")
     st.markdown("---")
 
     with st.sidebar:
         st.header("About")
         st.write("""
-        This App analyzes Item images using AI and some cool tech for:
-        - Estate sales
-        - Auction houses
+        The Estate Sale Game-Changer: No more item-by-item analysis. 
+        Our AI processes hundreds of photos in one go, delivering 
+        comprehensive Excel reports with detailed valuations.
+        Built for efficiency, trusted by professionals.
         """)
 
     folder_url = st.text_input("Enter Google Drive Folder URL", 
