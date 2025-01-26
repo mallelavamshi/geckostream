@@ -7,3 +7,4 @@ venv/
 reports/
 temp_image_*
 .DS_Store
+app_replica.py

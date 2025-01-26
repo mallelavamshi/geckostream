@@ -11,14 +11,21 @@ import openpyxl
 from openpyxl.drawing.image import Image as XLImage
 import datetime
 import base64
+from dotenv import load_dotenv
 
-# Constants (you might want to use st.secrets for these in production)
-ANTHROPIC_API_KEY = "anthropic-api-key"
-SEARCH_API_KEY = "search-api-key"
+# Load environment variables from .env file
+load_dotenv()
 
-# Import all original functions
+# Get API keys from environment variables
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
+SEARCH_API_KEY = os.getenv('SEARCH_API_KEY')
+
+# Validate API keys
+if not ANTHROPIC_API_KEY or not SEARCH_API_KEY:
+    raise ValueError("Missing required API keys in .env file")
+
 def extract_file_ids_from_folder(folder_url):
-    """Original extract_file_ids_from_folder function"""
+    """Extract file IDs from Google Drive folder"""
     try:
         folder_id = folder_url.split('/')[-1]
         files_url = f"https://drive.google.com/drive/folders/{folder_id}"
@@ -42,7 +49,7 @@ def extract_file_ids_from_folder(folder_url):
         return []
 
 def get_anthropic_analysis(json_data):
-    """Original get_anthropic_analysis function"""
+    """Get analysis from Anthropic's Claude API"""
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     
     prompt = f"""Please analyze the following product search results and provide a structured summary 
@@ -69,9 +76,7 @@ def get_anthropic_analysis(json_data):
         return "Error in generating analysis"
 
 def create_excel_report(results, output_file):
-    """
-    Creates an Excel report with multiple images and their analyses
-    """
+    """Creates an Excel report with images and analyses"""
     wb = openpyxl.Workbook()
     ws = wb.active
     
@@ -82,7 +87,7 @@ def create_excel_report(results, output_file):
         ws.cell(row=1, column=col).font = openpyxl.styles.Font(bold=True)
         ws.cell(row=1, column=col).alignment = openpyxl.styles.Alignment(horizontal='center')
     
-    row_height_multiplier = 15  # Adjust this value to change row height
+    row_height_multiplier = 15
     
     # Add data and images
     for row_idx, result in enumerate(results, 2):
@@ -104,7 +109,7 @@ def create_excel_report(results, output_file):
                 vertical='top'
             )
             
-            # Auto-adjust row height based on content
+            # Auto-adjust row height
             text_lines = len(result['analysis'].split('\n'))
             ws.row_dimensions[row_idx].height = max(200, text_lines * row_height_multiplier)
             
@@ -128,7 +133,6 @@ def create_excel_report(results, output_file):
         for cell in row:
             cell.border = thin_border
     
-    # Save the workbook
     try:
         wb.save(output_file)
         print(f"Excel report saved as: {os.path.abspath(output_file)}")
@@ -138,8 +142,8 @@ def create_excel_report(results, output_file):
         return False
 
 def search_google_lens(image_url):
-    """Original search_google_lens function"""
-    api_url = "https://www.searchapi.io/api/v1/search?engine=google_images"
+    """Search using Google Lens API"""
+    api_url = "https://www.searchapi.io/api/v1/search"
     params = {
         "engine": "google_lens",
         "search_type": "all",
@@ -171,7 +175,7 @@ def search_google_lens(image_url):
         return []
 
 def create_unique_filename(base_name="report"):
-    """Original create_unique_filename function"""
+    """Create unique filename with timestamp"""
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     return f"{base_name}_{timestamp}.xlsx"
 
@@ -186,11 +190,9 @@ def download_link(file_path, file_name):
 def main():
     st.set_page_config(page_title="Image Analysis Tool", page_icon="🔍", layout="wide")
     
-    # Header
     st.title("🔍 Google Drive Image Analysis Tool")
     st.markdown("---")
 
-    # Sidebar
     with st.sidebar:
         st.header("About")
         st.write("""
@@ -200,7 +202,6 @@ def main():
         - Generates detailed Excel reports
         """)
 
-    # Main content
     folder_url = st.text_input("Enter Google Drive Folder URL", 
                               placeholder="https://drive.google.com/drive/folders/...")
 
@@ -210,11 +211,9 @@ def main():
         else:
             try:
                 with st.spinner("Processing..."):
-                    # Create progress containers
                     progress_bar = st.progress(0)
                     status_text = st.empty()
 
-                    # Extract images
                     status_text.text("Extracting images from folder...")
                     images = extract_file_ids_from_folder(folder_url)
                     progress_bar.progress(20)
@@ -225,7 +224,6 @@ def main():
                         results = []
                         temp_files = set()
 
-                        # Process each image
                         for i, image in enumerate(images):
                             progress = 20 + (60 * (i + 1) / len(images))
                             progress_bar.progress(int(progress))
@@ -234,14 +232,12 @@ def main():
                             temp_path = f"temp_image_{image['id']}.png"
                             temp_files.add(temp_path)
 
-                            # Download and process image
                             try:
                                 response = requests.get(image['url'])
                                 if response.status_code == 200:
                                     img = Image.open(BytesIO(response.content))
                                     img.convert('RGB').save(temp_path, 'PNG')
 
-                                    # Get Google Lens results
                                     lens_results = search_google_lens(image['url'])
                                     if lens_results:
                                         analysis = get_anthropic_analysis(lens_results)
@@ -253,7 +249,6 @@ def main():
                             except Exception as e:
                                 st.error(f"Error processing image: {str(e)}")
 
-                        # Generate report
                         if results:
                             status_text.text("Generating Excel report...")
                             progress_bar.progress(90)
@@ -269,7 +264,6 @@ def main():
                             else:
                                 st.error("Failed to create Excel report")
 
-                        # Cleanup temporary files
                         for temp_file in temp_files:
                             if os.path.exists(temp_file):
                                 os.remove(temp_file)
@@ -278,4 +272,10 @@ def main():
                 st.error(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
-    main()
+    try:
+        if not ANTHROPIC_API_KEY or not SEARCH_API_KEY:
+            st.error("Missing required API keys. Please check your .env file.")
+        else:
+            main()
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
