@@ -13,8 +13,8 @@ import datetime
 import base64
 
 # Constants (you might want to use st.secrets for these in production)
-ANTHROPIC_API_KEY = "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"
-SEARCH_API_KEY = "VunraTgPnm2q6igtkYyeowGt"
+ANTHROPIC_API_KEY = "anthropic-api-key"
+SEARCH_API_KEY = "search-api-key"
 
 # Import all original functions
 def extract_file_ids_from_folder(folder_url):
